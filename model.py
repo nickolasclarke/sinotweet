@@ -11,8 +11,10 @@ import jieba
 #%% 
 # read in data from pickle, extract only the tweets
 tweets = pd.read_pickle('data/tweets.pickle')
-tweets = tweets['tweet_text']
+tweets_2019 = pd.read_pickle('data/tweets2019.pickle')
 
+tweets = tweets['tweet_text']
+tweets_2019 = tweets_2019['tweet_text']
 # %%
 #begin cleaning tweets, extract only Chinese characters
 stop_words = np.loadtxt('data/cn_stopwords.txt',dtype=str)
@@ -37,10 +39,14 @@ def cut_remove_stopwords(context):
     return cleaned
 
 # %%
-tweets = pd.Series([getChinese(tweet) for tweet in tweets])
-tweets = tweets.replace('', np.nan)
-tweets = tweets[tweets.isna() == False]
-tweets = pd.Series([cut_remove_stopwords(tweet) for tweet in tweets])
+def clean_tweets(df):
+    df = pd.Series([getChinese(tweet) for tweet in df])
+    df = df.replace('', np.nan)
+    df = df[df.isna() == False]
+    df = pd.Series([cut_remove_stopwords(tweet) for tweet in df])
+    return df
+
+# %%
 
 
 # %%
@@ -58,7 +64,15 @@ def get_lda(corpus, words_no_above=0.5, num_topics=10):
     for idx, topic in lda_model.print_topics(-1):
         topic_dic[f'topic {idx}'] = topic.split('+')
     return pd.DataFrame(topic_dic)
+#%%
+tweets = clean_tweets(tweets)
+tweets_2019 = clean_tweets(tweets_2019)
 # %%
 #TODO run against a subset to optimize.
-get_lda(tweets.sample(10000), words_no_above=0.6, num_topics=5)
+tweets_model = get_lda(tweets.sample(80000), words_no_above=0.9, num_topics=3)
+tweets_model
+# %%
+tweets2019_model = get_lda(tweets_2019.sample(100000), words_no_above=0.5, num_topics=5)
+tweets2019_model
+
 # %%
